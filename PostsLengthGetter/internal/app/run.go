@@ -12,7 +12,7 @@ import (
 
 var (
 	postsFilePath = "../Dataset/posts.csv"
-	xlsxFilePath  = "data/posts_length.xlsx"
+	xlsxFilePath  = "data/posts_length_test.xlsx"
 )
 
 func Run() error {
@@ -75,18 +75,6 @@ func setTableTitles(sh *xlsx.Sheet) error {
 	if err != nil {
 		return err
 	}
-	cell.SetValue("title")
-
-	cell, err = sh.Cell(0, 3)
-	if err != nil {
-		return err
-	}
-	cell.SetValue("text")
-
-	cell, err = sh.Cell(0, 4)
-	if err != nil {
-		return err
-	}
 	cell.SetValue("text_length")
 
 	return nil
@@ -116,8 +104,6 @@ func processRecords(reader *csv.Reader, wb *xlsx.File, sh *xlsx.Sheet) (int, err
 
 		id, err := strconv.Atoi(record[0])
 		postId, err := strconv.Atoi(record[1])
-		title := record[2]
-		text := record[3]
 		textLength := len(record[3])
 
 		// Skip empty text posts
@@ -125,7 +111,7 @@ func processRecords(reader *csv.Reader, wb *xlsx.File, sh *xlsx.Sheet) (int, err
 			continue
 		}
 
-		myRecord := model.NewRecord(id, postId, title, text, textLength)
+		myRecord := model.NewRecord(id, postId, textLength)
 
 		// Fill row
 		if err = fillRow(sh, row, myRecord); err != nil {
@@ -161,18 +147,6 @@ func fillRow(sh *xlsx.Sheet, row int, myRecord *model.Record) error {
 	cell.SetInt(myRecord.PostID)
 
 	cell, err = sh.Cell(row, 2)
-	if err != nil {
-		return err
-	}
-	cell.SetString(myRecord.Title)
-
-	cell, err = sh.Cell(row, 3)
-	if err != nil {
-		return err
-	}
-	cell.SetString(myRecord.Text)
-
-	cell, err = sh.Cell(row, 4)
 	if err != nil {
 		return err
 	}
