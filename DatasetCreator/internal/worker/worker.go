@@ -40,7 +40,7 @@ func (w *Worker) Process() (int, error) {
 	}
 
 	row := 1
-	for row < 10 {
+	for {
 		post, err := w.PostsReader.GetNext()
 		if err != nil {
 			return totalProcessedRecords, err
@@ -115,8 +115,6 @@ func (w *Worker) Process() (int, error) {
 		totalProcessedRecords++
 		row++
 	}
-
-	return totalProcessedRecords, nil
 }
 
 func (w *Worker) fillRow(row int, myRecord *model.Record) error {
