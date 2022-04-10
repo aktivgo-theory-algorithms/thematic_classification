@@ -16,6 +16,7 @@ func NewCsvReader(filePath string) (*os.File, *CsvReader, error) {
 	}
 
 	reader := csv.NewReader(file)
+	reader.LazyQuotes = true
 
 	return file, &CsvReader{reader}, nil
 }

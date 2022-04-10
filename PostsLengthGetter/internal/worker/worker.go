@@ -4,6 +4,7 @@ import (
 	"PostsLengthGetter/internal/model"
 	"PostsLengthGetter/internal/reader"
 	"PostsLengthGetter/internal/xlsx"
+	"io"
 	"log"
 	"strconv"
 	"time"
@@ -36,10 +37,14 @@ func (w *Worker) Process() (int, error) {
 		record, err := w.CSVReader.Read()
 		if err != nil {
 			// If end save file and return
-			if err = w.WorkSheet.Save(); err != nil {
-				return totalProcessedRecords, err
+			if err == io.EOF {
+				if err = w.WorkSheet.Save(); err != nil {
+					return totalProcessedRecords, err
+				}
+				return totalProcessedRecords, nil
 			}
-			return totalProcessedRecords, nil
+
+			return totalProcessedRecords, err
 		}
 
 		id, err := strconv.Atoi(record[0])

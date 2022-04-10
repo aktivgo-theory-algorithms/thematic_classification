@@ -1,38 +1,32 @@
 package app
 
 import (
+	"DatasetCreater/internal/config"
 	"DatasetCreater/internal/reader"
 	"DatasetCreater/internal/worker"
 	"DatasetCreater/internal/xlsx"
 	"log"
 )
 
-var (
-	postsFilePath = "../Dataset/posts.csv"
-	sheetName     = "posts_length"
-	xlsxFilePath  = "data/posts_length_test.xlsx"
-	titles        = []string{"id", "post_id", "title", "text"}
-)
-
 func Run() error {
-	// Creating csv reader
-	file, csvReader, err := reader.NewCsvReader(postsFilePath)
+	// Creating csv posts reader
+	filePosts, csvReaderPosts, err := reader.NewCsvReader(config.PostsFilePath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer filePosts.Close()
 
 	// Creating worksheet
-	workSheet, err := xlsx.NewWorkSheet(sheetName, xlsxFilePath)
+	workSheet, err := xlsx.NewWorkSheet(config.SheetName, config.XlsxFilePath)
 	if err != nil {
 		return err
 	}
 
-	if err := workSheet.SetTitles(titles); err != nil {
+	if err := workSheet.SetTitles(config.Titles); err != nil {
 		return err
 	}
 
-	w := worker.NewWorker(csvReader, workSheet)
+	w := worker.NewWorker(csvReaderPosts, workSheet)
 
 	totalProcessedRecords, err := w.Process()
 	if err != nil {
