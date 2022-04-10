@@ -1,11 +1,9 @@
 package worker
 
 import (
-	"DatasetCreater/internal/config"
 	"DatasetCreater/internal/model"
 	"DatasetCreater/internal/reader"
 	"DatasetCreater/internal/xlsx"
-	"io"
 	"log"
 	"strconv"
 	"strings"
@@ -17,40 +15,45 @@ var (
 )
 
 type Worker struct {
-	CSVReaderPosts *reader.CsvReader
-	CSVReaderTags  *reader.CsvReader
-	WorkSheet      *xlsx.WorkSheet
+	PostsReader *reader.PostReader
+	TagsReader  *reader.TagsReader
+	WorkSheet   *xlsx.WorkSheet
 }
 
-func NewWorker(csvReader *reader.CsvReader, workSheet *xlsx.WorkSheet) *Worker {
+func NewWorker(postsReader *reader.PostReader, tagsReader *reader.TagsReader, workSheet *xlsx.WorkSheet) *Worker {
 	return &Worker{
-		CSVReaderPosts: csvReader,
-		WorkSheet:      workSheet,
+		PostsReader: postsReader,
+		TagsReader:  tagsReader,
+		WorkSheet:   workSheet,
 	}
 }
 
 func (w *Worker) Process() (int, error) {
+	defer w.WorkSheet.Save()
+
 	totalProcessedRecords := 0
 
 	// Skip first record, because it is titles
-	_, err := w.CSVReaderPosts.Read()
+	err := w.PostsReader.SkipRecord()
 	if err != nil {
 		return totalProcessedRecords, nil
 	}
 
+	// Skip first record, because it is titles
+	err = w.TagsReader.SkipRecord()
+	if err != nil {
+		return totalProcessedRecords, err
+	}
+
 	row := 1
-	for {
-		// Read next post
-		post, err := w.CSVReaderPosts.Read()
+	for row < 10 {
+		post, err := w.PostsReader.GetNext()
 		if err != nil {
-			// If end save file and return
-			if err == io.EOF {
-				if err = w.WorkSheet.Save(); err != nil {
-					return totalProcessedRecords, err
-				}
-				return totalProcessedRecords, nil
-			}
 			return totalProcessedRecords, err
+		}
+
+		if post == nil {
+			return totalProcessedRecords, nil
 		}
 
 		textLength := len(post[3])
@@ -61,49 +64,26 @@ func (w *Worker) Process() (int, error) {
 		}
 
 		id, err := strconv.Atoi(post[0])
+		if err != nil {
+			return totalProcessedRecords, err
+		}
 		postId, err := strconv.Atoi(post[1])
+		if err != nil {
+			return totalProcessedRecords, err
+		}
 		title := strings.TrimSpace(post[2])
 		text := strings.TrimSpace(post[3])
 
 		curRecord := model.NewRecord(id, postId, title, text)
 
-		// Get tags
-
-		fileTags, csvTagsReader, err := reader.NewCsvReader(config.TagsFilePath)
+		log.Println(postId)
+		tags, err := w.TagsReader.GetTagsByPostId(postId)
 		if err != nil {
 			return totalProcessedRecords, err
 		}
-		w.CSVReaderTags = csvTagsReader
 
-		// Skip first record, because it is titles
-		_, err = w.CSVReaderTags.Read()
-		if err != nil {
-			fileTags.Close()
-			return totalProcessedRecords, err
-		}
-
-		for {
-			// Read next tag
-			tag, err := w.CSVReaderTags.Read()
-			if err != nil {
-				// If end save file and return
-				if err == io.EOF {
-					if err := w.WorkSheet.Save(); err != nil {
-						fileTags.Close()
-						return totalProcessedRecords, err
-					}
-
-					break
-				}
-				return totalProcessedRecords, err
-			}
-
-			postIdTag, err := strconv.Atoi(tag[1])
-			if postIdTag != postId {
-				continue
-			}
-
-			curRecord.AddTag(tag[2])
+		if tags != nil {
+			curRecord.AddTags(tags)
 		}
 
 		// Fill row
@@ -114,7 +94,6 @@ func (w *Worker) Process() (int, error) {
 		// Save file every 29-31 Seconds
 		if time.Now().Second() >= 29 && time.Now().Second() <= 31 {
 			if err = w.WorkSheet.Save(); err != nil {
-				fileTags.Close()
 				return totalProcessedRecords, err
 			}
 		}

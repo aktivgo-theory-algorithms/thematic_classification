@@ -20,3 +20,12 @@ func NewCsvReader(filePath string) (*os.File, *CsvReader, error) {
 
 	return file, &CsvReader{reader}, nil
 }
+
+func (cr *CsvReader) SkipRecord() error {
+	_, err := cr.Read()
+	if err != nil {
+		return nil
+	}
+
+	return nil
+}
