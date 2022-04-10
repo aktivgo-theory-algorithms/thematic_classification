@@ -5,7 +5,11 @@ import (
 	"os"
 )
 
-func NewCsvReader(filePath string) (*os.File, *csv.Reader, error) {
+type CsvReader struct {
+	*csv.Reader
+}
+
+func NewCsvReader(filePath string) (*os.File, *CsvReader, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, nil, err
@@ -13,5 +17,5 @@ func NewCsvReader(filePath string) (*os.File, *csv.Reader, error) {
 
 	reader := csv.NewReader(file)
 
-	return file, reader, nil
+	return file, &CsvReader{reader}, nil
 }
