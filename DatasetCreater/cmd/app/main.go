@@ -1,7 +1,7 @@
 package main
 
 import (
-	"PostsLengthGetter/internal/app"
+	"DatasetCreater/internal/app"
 	"log"
 )
 
