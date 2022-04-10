@@ -39,12 +39,6 @@ func (w *Worker) Process() (int, error) {
 		return totalProcessedRecords, nil
 	}
 
-	// Skip first record, because it is titles
-	err = w.TagsReader.SkipRecord()
-	if err != nil {
-		return totalProcessedRecords, err
-	}
-
 	row := 1
 	for row < 10 {
 		post, err := w.PostsReader.GetNext()
@@ -76,9 +70,22 @@ func (w *Worker) Process() (int, error) {
 
 		curRecord := model.NewRecord(id, postId, title, text)
 
-		log.Println(postId)
+		tagsFile, tagsReader, err := w.TagsReader.Recreate()
+		if err != nil {
+			return totalProcessedRecords, err
+		}
+
+		w.TagsReader = tagsReader
+
+		// Skip first record, because it is titles
+		err = w.TagsReader.SkipRecord()
+		if err != nil {
+			return totalProcessedRecords, err
+		}
+
 		tags, err := w.TagsReader.GetTagsByPostId(postId)
 		if err != nil {
+			tagsFile.Close()
 			return totalProcessedRecords, err
 		}
 
@@ -88,14 +95,18 @@ func (w *Worker) Process() (int, error) {
 
 		// Fill row
 		if err = w.fillRow(row, curRecord); err != nil {
+			tagsFile.Close()
 			return totalProcessedRecords, err
 		}
 
 		// Save file every 29-31 Seconds
 		if time.Now().Second() >= 29 && time.Now().Second() <= 31 {
 			if err = w.WorkSheet.Save(); err != nil {
+				tagsFile.Close()
 				return totalProcessedRecords, err
 			}
+			log.Println("File saved")
+			time.Sleep(5 * time.Second)
 		}
 
 		log.Printf("post (id = %d, post_id = %d) successfully recorded to row %d",
