@@ -15,6 +15,12 @@ type TagsReader struct {
 	*CsvReader
 }
 
+type Tags struct {
+	*sync.Mutex
+
+	Tags []string
+}
+
 func NewTagsReader(csvReader *CsvReader) *TagsReader {
 	return &TagsReader{&sync.Mutex{}, csvReader}
 }
@@ -32,7 +38,7 @@ func (tr *TagsReader) Recreate() (*os.File, *TagsReader, error) {
 }
 
 func (tr *TagsReader) GetTagsByPostId(postId int) ([]string, error) {
-	var tags []string
+	tags := &Tags{&sync.Mutex{}, nil}
 
 	var wg sync.WaitGroup
 	wg.Add(config.GoroutinesCount / 4)
@@ -58,7 +64,9 @@ func (tr *TagsReader) GetTagsByPostId(postId int) ([]string, error) {
 				}
 
 				if postIdTag == postId {
-					tags = append(tags, tag[2])
+					tags.Lock()
+					tags.Tags = append(tags.Tags, tag[2])
+					tags.Unlock()
 				}
 			}
 		}()
@@ -66,5 +74,5 @@ func (tr *TagsReader) GetTagsByPostId(postId int) ([]string, error) {
 
 	wg.Wait()
 
-	return tags, nil
+	return tags.Tags, nil
 }
