@@ -2,6 +2,7 @@ package reader
 
 import (
 	"encoding/csv"
+	"io"
 	"os"
 	"sync"
 )
@@ -9,33 +10,36 @@ import (
 type CsvReader struct {
 	*sync.Mutex
 	*csv.Reader
-
-	FilePath string
 }
 
-func NewCsvReader(filePath string) (*os.File, *CsvReader, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, nil, err
-	}
-
+func NewCsvReader(file *os.File) (*CsvReader, error) {
 	reader := csv.NewReader(file)
-	reader.LazyQuotes = true
 
-	return file, &CsvReader{
-		Mutex:    &sync.Mutex{},
-		Reader:   reader,
-		FilePath: filePath,
+	return &CsvReader{
+		Mutex:  &sync.Mutex{},
+		Reader: reader,
 	}, nil
 }
 
-func (cr *CsvReader) SkipRecord() error {
-	cr.Lock()
+func (cr *CsvReader) Skip() error {
 	_, err := cr.Read()
-	cr.Unlock()
 	if err != nil {
 		return nil
 	}
 
 	return nil
+}
+
+func (cr *CsvReader) GetNext() ([]string, error) {
+	cr.Lock()
+	row, err := cr.Read()
+	cr.Unlock()
+	if err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return row, nil
 }

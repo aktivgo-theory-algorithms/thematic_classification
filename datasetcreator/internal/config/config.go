@@ -1,8 +1,9 @@
 package config
 
+import "runtime"
+
 var (
-	PostsFilePath   = "../Dataset/posts.csv"
-	TagsFilePath    = "../Dataset/tags.csv"
-	ResultFilePath  = "habrposts.csv"
-	GoroutinesCount = 12
+	InputPath       = "../lenta-ru-news.csv"
+	OutputPath      = "dataset.csv"
+	GoroutinesCount = runtime.NumCPU()
 )

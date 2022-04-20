@@ -6,31 +6,43 @@ import (
 	"datasetcreator/internal/worker"
 	"datasetcreator/internal/writer"
 	"log"
+	"os"
 )
 
 func Run() error {
-	filePosts, csvReaderPosts, err := reader.NewCsvReader(config.PostsFilePath)
+	inputFile, err := os.Open(config.InputPath)
 	if err != nil {
 		return err
 	}
-	defer filePosts.Close()
+	defer inputFile.Close()
 
-	postsReader := reader.NewPostsReader(csvReaderPosts)
-
-	fileResult, csvWriter, err := writer.NewCsvWriter(config.ResultFilePath)
-	if err != nil {
-		return err
-	}
-	defer fileResult.Close()
-
-	w := worker.NewWorker(postsReader, csvWriter)
-
-	totalProcessedRecords, err := w.Process()
+	csvReader, err := reader.NewCsvReader(inputFile)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Program finished, total records: %d", totalProcessedRecords)
+	outputFile, err := os.Open(config.OutputPath)
+	if err != nil {
+		outputFile, err = os.Create(config.OutputPath)
+		if err != nil {
+			return err
+		}
+	}
+	defer outputFile.Close()
+
+	csvWriter, err := writer.NewCsvWriter(outputFile)
+	if err != nil {
+		return err
+	}
+
+	w := worker.NewWorker(csvReader, csvWriter)
+
+	totalProcessed, err := w.Process()
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Program finished, total processed: %d", totalProcessed)
 
 	return nil
 }
