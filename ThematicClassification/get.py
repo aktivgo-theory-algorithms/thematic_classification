@@ -3,8 +3,8 @@
 from pandas import read_csv
 
 # Загрузка датасета
-url = "../datasetcreator/habrposts.csv"
-names = ['title', 'text', 'class']
+url = "../datasetcreator/dataset.csv"
+names = ['text', 'tag']
 dataset = read_csv(url, names=names, engine='python', encoding='utf-8', error_bad_lines=False)
 
 # shape
@@ -17,4 +17,4 @@ print(dataset.head(20))
 print(dataset.describe())
 
 # Распределение по атрибуту class
-print(dataset.groupby('class').size())
+print(dataset.groupby('tag').size())
