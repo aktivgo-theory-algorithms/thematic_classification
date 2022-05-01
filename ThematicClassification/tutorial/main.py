@@ -144,15 +144,15 @@ if __name__ == '__main__':
     print(classification_report(y_test, y_pred))
     print(accuracy_score(y_test, y_pred))
 
-    # dataset['title'] = dataset['title'].map(lambda x: x.lower())
-    # dataset['title'] = dataset['title'].map(lambda x: x.replace('\n', ''))
-    # dataset['title'] = dataset['title'].map(lambda x: remove_punct(x))
-    # dataset['title'] = dataset['title'].map(lambda x: x.split(' '))
-    # dataset['title'] = dataset['title'].map(
-    #     lambda x: [token for token in x if token not in russian_stopwords
-    #                and token != " "
-    #                and token.strip() not in punctuation])
-    # dataset['title'] = dataset['title'].map(lambda x: ' '.join(x))
+    dataset['title'] = dataset['title'].map(lambda x: x.lower())
+    dataset['title'] = dataset['title'].map(lambda x: x.replace('\n', ''))
+    dataset['title'] = dataset['title'].map(lambda x: remove_punct(x))
+    dataset['title'] = dataset['title'].map(lambda x: x.split(' '))
+    dataset['title'] = dataset['title'].map(
+        lambda x: [token for token in x if token not in russian_stopwords
+                   and token != " "
+                   and token.strip() not in punctuation])
+    dataset['title'] = dataset['title'].map(lambda x: ' '.join(x))
 
     # Загружаем алгоритмы модели
     # models = []
