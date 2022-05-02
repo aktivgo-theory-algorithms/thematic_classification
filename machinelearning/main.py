@@ -1,11 +1,15 @@
 import pandas
 import re
 import numpy
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
 
 
 def read_dataset():
-    url = "../thematic_classification/lenta-ru-news.csv"
+    url = "../lenta-ru-news.csv"
     return pandas.read_csv(url)
 
 
@@ -91,9 +95,9 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-    kNN = KNeighborsClassifier(n_neighbors=10)
-    kNN.fit(X_train, y_train)
-    y_pred = kNN.predict(X_test)
+    classificator = SVC(gamma='auto')
+    classificator.fit(X_train, y_train)
+    y_pred = classificator.predict(X_test)
 
     from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
